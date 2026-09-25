@@ -46,7 +46,7 @@ type MenuPage = {
   items?: MenuItem[];
 };
 
-const pages: MenuPage[] = [
+const pages: [MenuPage, ...MenuPage[]] = [
   { kind: "cover", title: "Slivasa", subtitle: "Restaurant & Café", image: coverImage, imageAlt: "Chocolate cake with coffee on a dark wooden table" },
   { kind: "welcome", eyebrow: "A note from our kitchen", title: "Made for slow moments", subtitle: "At Slivasa, familiar recipes meet patient craft. Every brownie, cake and confection is baked in small batches, with honest ingredients and a generous hand." },
   { kind: "menu", eyebrow: "From the oven", title: "Brownies", image: browniesImage, imageAlt: "Stack of rich walnut fudge brownies", items: [
@@ -83,6 +83,8 @@ const pages: MenuPage[] = [
   ] },
   { kind: "offers", eyebrow: "A little more to share", title: "Slivasa Specials", subtitle: "Pair any two brownies with two café beverages and enjoy 10% off. Celebration cake pre-orders include a complimentary message plaque." },
 ];
+
+const getPage = (index: number) => pages[index] ?? pages[0];
 
 function useDesktop() {
   const [desktop, setDesktop] = useState(false);
@@ -159,15 +161,15 @@ function SlivasaMenu() {
         <div className="book-shadow" aria-hidden="true" />
         <div className="book-pages">
           {visiblePages.map((index, position) => (
-            <MenuSheet key={index} page={pages[index]} pageNumber={index + 1} side={position === 0 ? "left" : "right"} onOpen={index === 0 ? () => turnPage("next") : undefined} />
+            <MenuSheet key={index} page={getPage(index)} pageNumber={index + 1} side={position === 0 ? "left" : "right"} onOpen={index === 0 ? () => turnPage("next") : undefined} />
           ))}
           {turn && (
             <div className={`turning-sheet turn-${turn.direction}`} aria-hidden="true">
               <div className="turning-face turning-front">
-                <MenuPageContent page={pages[turn.page]} pageNumber={turn.page + 1} onOpen={undefined} />
+                <MenuPageContent page={getPage(turn.page)} pageNumber={turn.page + 1} onOpen={undefined} />
               </div>
               <div className="turning-face turning-back">
-                <MenuPageContent page={pages[turn.direction === "next" ? Math.min(turn.page + 1, pages.length - 1) : Math.max(turn.page - 1, 0)]} pageNumber={turn.direction === "next" ? Math.min(turn.page + 2, pages.length) : turn.page} onOpen={undefined} />
+                <MenuPageContent page={getPage(turn.direction === "next" ? Math.min(turn.page + 1, pages.length - 1) : Math.max(turn.page - 1, 0))} pageNumber={turn.direction === "next" ? Math.min(turn.page + 2, pages.length) : turn.page} onOpen={undefined} />
               </div>
             </div>
           )}
@@ -187,7 +189,7 @@ function ControlButton({ label, disabled, onClick, children }: { label: string; 
   return <button className="page-control" type="button" aria-label={label} title={label} disabled={disabled} onClick={onClick}>{children}</button>;
 }
 
-function MenuSheet({ page, pageNumber, side, onOpen }: { page: MenuPage; pageNumber: number; side: "left" | "right"; onOpen?: () => void }) {
+function MenuSheet({ page, pageNumber, side, onOpen }: { page: MenuPage; pageNumber: number; side: "left" | "right"; onOpen?: (() => void) | undefined }) {
   return (
     <article className={`menu-sheet sheet-${side} ${page.kind === "cover" ? "cover-sheet" : ""}`} onClick={(event) => {
       if (onOpen) onOpen();
@@ -199,7 +201,7 @@ function MenuSheet({ page, pageNumber, side, onOpen }: { page: MenuPage; pageNum
   );
 }
 
-function MenuPageContent({ page, pageNumber, onOpen }: { page: MenuPage; pageNumber: number; onOpen?: () => void }) {
+function MenuPageContent({ page, pageNumber, onOpen }: { page: MenuPage; pageNumber: number; onOpen?: (() => void) | undefined }) {
   if (page.kind === "cover") {
     return (
       <div className="cover-content" style={{ backgroundImage: `linear-gradient(var(--cover-overlay), var(--cover-overlay)), url(${page.image})` }}>
@@ -240,7 +242,7 @@ function MenuPageContent({ page, pageNumber, onOpen }: { page: MenuPage; pageNum
   );
 }
 
-function PageHeading({ eyebrow, title }: { eyebrow?: string; title: string }) {
+function PageHeading({ eyebrow, title }: { eyebrow?: string | undefined; title: string }) {
   return <header className="page-heading">{eyebrow && <p>{eyebrow}</p>}<h2>{title}</h2><span aria-hidden="true">◆</span></header>;
 }
 function PageFolio({ number }: { number: number }) { return <span className="page-folio">{String(number).padStart(2, "0")}</span>; }
